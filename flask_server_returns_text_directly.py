@@ -118,7 +118,7 @@ def unet(pretrained_weights=None, input_size=(512, 512, 1)):
 
     model = Model(inputs=inputs, outputs=conv10)
 
-    model.compile(optimizer=Adam(lr=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer=Adam(learning_rate=1e-4), loss='binary_crossentropy', metrics=['accuracy'])
 
     if pretrained_weights:
         model.load_weights(pretrained_weights)
@@ -254,7 +254,10 @@ conv_6 = Conv2D(512, (3,3), activation='relu', padding='same')(batch_norm_5)
 batch_norm_6 = BatchNormalization()(conv_6)
 pool_6 = MaxPool2D(pool_size=(2, 1))(batch_norm_6)
 conv_7 = Conv2D(512, (2,2), activation='relu')(pool_6)
-squeezed = Lambda(lambda x: K.squeeze(x, 1))(conv_7)
+squeezed = Lambda(
+    lambda x: K.squeeze(x, 1),
+    output_shape=lambda input_shape: (input_shape[0], input_shape[2], input_shape[3])
+)(conv_7)
 blstm_1 = Bidirectional(LSTM(128, return_sequences=True, dropout=0.2))(squeezed)
 blstm_2 = Bidirectional(LSTM(128, return_sequences=True, dropout=0.2))(blstm_1)
 outputs = Dense(len(char_list)+1, activation='softmax')(blstm_2)
@@ -332,6 +335,7 @@ app = Flask(__name__)
 
 @app.route('/process_image', methods=['POST'])
 def process_image():
+    print("Request received")
     # Get the image file from the request
     image_file = request.files['image']
     
