@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Processing App</title>
+</head>
+<body>
+    <input type="file" id="imageInput" accept="image/*">
+    <button onclick="processImage()">Process Image</button>
+    <div id="result"></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        function processImage() {
+            var fileInput = document.getElementById('imageInput');
+            var file = fileInput.files[0];
+
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var image_data = e.target.result.split(',')[1]; // Extract base64-encoded image data
+                socket.emit('process_image', {'image_data': image_data});
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+        socket.on('text_response', function(data) {
+            var resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<p>Result: ' + data.text + '</p>';
+        });
+    </script>
+</body>
+</html>
